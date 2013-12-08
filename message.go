@@ -36,7 +36,10 @@ func (t OpCode) String() string {
 type HType byte
 
 type Message struct {
+    // Meta Data
     Length      uint8 //length of Packet in Bytes
+    Type        DHCPMessageType
+    // RFC Fields
 	Op			OpCode
 	HType 		HType
 	HLen		byte
@@ -51,7 +54,7 @@ type Message struct {
 	CHAddr      net.HardwareAddr
 	SName       string //64 bytes
 	File 		string //128 bytes
-	Options 	[]Option	//Variable
+	Options 	OptionMap	//Variable
 }
 
 func (m *Message) FromBuffer(length int, b []byte) error {
@@ -112,7 +115,10 @@ func (m *Message) String() string {
     s += fmt.Sprintln("+---------------------------------------------------------------+")
     s += fmt.Sprintln("| File Name: ",m.File)
     s += fmt.Sprintln("+---------------------------------------------------------------+")
-    s += fmt.Sprintln("Options: ", m.Options)
+    s += fmt.Sprintln("Options")
+    for k, v := range(m.Options) {
+        s += fmt.Sprintln(k, v)
+    }
     return s
 }
 
@@ -122,9 +128,9 @@ const (
 	DHCPDISCOVER    DHCPMessageType = 1 // Broadcast C -> S
 	DHCPOFFER       DHCPMessageType = 2 // S -> C, YIAddr set
 	DHCPREQUEST     DHCPMessageType = 3 // C -> S
-	DHCPDecline     DHCPMessageType = 4
+	DHCPDECLINE     DHCPMessageType = 4
 	DHCPACK         DHCPMessageType = 5
 	DHCPNAK         DHCPMessageType = 6
-	DHCPRelease     DHCPMessageType = 7
-	DHCPInform      DHCPMessageType = 8
+	DHCPRELEASE     DHCPMessageType = 7
+	DHCPINFORM      DHCPMessageType = 8
 )
