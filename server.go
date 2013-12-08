@@ -35,18 +35,18 @@ func (s *Server) Serve(conn *net.UDPConn) error {
         }
         fmt.Println("Receive Packet", length, remoteAddr)
         
-        p := &Packet{}
-        err = p.FromBuffer(length, buffer)
+        m := &Message{}
+        err = m.FromBuffer(length, buffer)
         if err != nil {
             fmt.Println("server error:", err)
             return err
         }
-        p.String()
+        fmt.Println(m.String())
     }
     return nil
 }
 
-func (s *Server) Handle(p *Packet) error {
+func (s *Server) Handle(m *Message) error {
     return nil
 }
 

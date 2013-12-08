@@ -35,7 +35,7 @@ func (t OpCode) String() string {
 //See Assigned Numbers RFC
 type HType byte
 
-type Packet struct {
+type Message struct {
     Length      uint8 //length of Packet in Bytes
 	Op			OpCode
 	HType 		HType
@@ -54,64 +54,66 @@ type Packet struct {
 	Options 	[]Option	//Variable
 }
 
-func (p *Packet) FromBuffer(length int, b []byte) error {
-    p.Length = uint8(length)
-    p.Op = OpCode(b[0])
-    p.HType = HType(b[1])
-    p.HLen = b[2]
-    p.Hops = uint8(b[3])
-    p.XId = b[4:8]
+func (m *Message) FromBuffer(length int, b []byte) error {
+    m.Length = uint8(length)
+    m.Op = OpCode(b[0])
+    m.HType = HType(b[1])
+    m.HLen = b[2]
+    m.Hops = uint8(b[3])
+    m.XId = b[4:8]
     
     buf := bytes.NewReader(b[8:10])
-    err := binary.Read(buf, binary.BigEndian, &p.Secs)
+    err := binary.Read(buf, binary.BigEndian, &m.Secs)
     if err != nil {
         return err
     }
 
-    p.Flags = b[10:12]
-    p.CIAddr = net.IP(b[12:16])
-    p.YIAddr = net.IP(b[16:20])
-    p.SIAddr = net.IP(b[20:24])
-    p.GIAddr = net.IP(b[24:28])
-    p.CHAddr = net.HardwareAddr(b[28:28 + p.HLen])
-    p.SName = string(b[44:108])
-    p.File = string(b[108:236])
-    p.Options, err = ParseOptions(b[236:])
+    m.Flags = b[10:12]
+    m.CIAddr = net.IP(b[12:16])
+    m.YIAddr = net.IP(b[16:20])
+    m.SIAddr = net.IP(b[20:24])
+    m.GIAddr = net.IP(b[24:28])
+    m.CHAddr = net.HardwareAddr(b[28:28 + m.HLen])
+    m.SName = string(b[44:108])
+    m.File = string(b[108:236])
+    m.Options, err = ParseOptions(b[236:])
     return nil
 }
 
-func (p *Packet) ToBuffer() ([]byte, error) {
-    buffer := make([]byte, p.Length)
+func (m *Message) ToBuffer() ([]byte, error) {
+    buffer := make([]byte, m.Length)
     
     return buffer, nil
 }
 
-func (p *Packet) String() {
+func (m *Message) String() string {
     s := fmt.Sprintln("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+")
-    s += fmt.Sprintf("| %v ", p.Op.String())
-    s += fmt.Sprintf("| %v ", p.HType)
-    s += fmt.Sprintf("| %v ", p.HLen)
-    s += fmt.Sprintf("| %v |\n", p.Hops)
+    s += fmt.Sprintf("| %v ", m.Op.String())
+    s += fmt.Sprintf("| %v ", m.HType)
+    s += fmt.Sprintf("| %v ", m.HLen)
+    s += fmt.Sprintf("| %v |\n", m.Hops)
     s += fmt.Sprintln("+---------------+---------------+---------------+---------------+")
-    s += fmt.Sprintf("| %v |\n", p.XId)
+    s += fmt.Sprintf("| %v |\n", m.XId)
     s += fmt.Sprintln("+-------------------------------+-------------------------------+")
-    s += fmt.Sprintf("| %v s ", p.Secs)
-    s += fmt.Sprintf("| %v |\n", p.Flags)
+    s += fmt.Sprintf("| %v s ", m.Secs)
+    s += fmt.Sprintf("| %v |\n", m.Flags)
     s += fmt.Sprintln("+-------------------------------+-------------------------------+")
-    s += fmt.Sprintln("| CI: "+ p.CIAddr.String())
+    s += fmt.Sprintln("| CI: "+ m.CIAddr.String())
     s += fmt.Sprintln("+---------------------------------------------------------------+")
-    s += fmt.Sprintln("| YI: "+ p.YIAddr.String())
+    s += fmt.Sprintln("| YI: "+ m.YIAddr.String())
     s += fmt.Sprintln("+---------------------------------------------------------------+")
-    s += fmt.Sprintln("| SI: "+ p.SIAddr.String())
+    s += fmt.Sprintln("| SI: "+ m.SIAddr.String())
     s += fmt.Sprintln("+---------------------------------------------------------------+")
-    s += fmt.Sprintln("| GI: "+ p.GIAddr.String())
+    s += fmt.Sprintln("| GI: "+ m.GIAddr.String())
     s += fmt.Sprintln("+---------------------------------------------------------------+")
-    s += fmt.Sprintf("| CH: %v |\n", p.CHAddr)
+    s += fmt.Sprintf("| CH: %v |\n", m.CHAddr)
     s += fmt.Sprintln("+---------------------------------------------------------------+")
-    s += fmt.Sprintln("Server Name: ",p.SName)
-    s += fmt.Sprintln("File Name: ",p.File)
-    s += fmt.Sprintln("Options: ", p.Options)
-    fmt.Print(s)
+    s += fmt.Sprintln("| Server Name: ",m.SName)
+    s += fmt.Sprintln("+---------------------------------------------------------------+")
+    s += fmt.Sprintln("| File Name: ",m.File)
+    s += fmt.Sprintln("+---------------------------------------------------------------+")
+    s += fmt.Sprintln("Options: ", m.Options)
+    return s
 }
 
 type DHCPMessageType byte
