@@ -80,6 +80,7 @@ func (m *Message) FromBuffer(length int, b []byte) error {
     m.SName = string(b[44:108])
     m.File = string(b[108:236])
     m.Options, err = ParseOptions(b[236:])
+    m.Type = DHCPMessageType(m.Options[OPT_MESSAGE_TYPE][0])
     return nil
 }
 

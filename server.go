@@ -3,9 +3,13 @@ package godhcp
 import (
     "fmt"
     "net"
+    "errors"
+    "bytes"
 )
 
-type Server struct {}
+type Server struct {
+    Clients     []*Client
+}
 
 func ListenAndServe() (error) {
     s := &Server{}
@@ -42,6 +46,21 @@ func (s *Server) Serve(conn *net.UDPConn) error {
             return err
         }
         fmt.Println(m.String())
+        client, err := s.FindOrCreateClient(m)
+        if err != nil {
+            fmt.Println("Error creating client:", err)
+        }
+        
+        resp, err := client.ProcessMessage(m)
+        if err != nil {
+            fmt.Println("Error parsing message:", err)
+        }
+        fmt.Println("Response: ", resp)
+        
+        fmt.Println("Clients:")
+        for _, c := range s.Clients {
+            fmt.Println(c.String())
+        }
     }
     return nil
 }
@@ -52,4 +71,27 @@ func (s *Server) Handle(m *Message) error {
 
 func (s *Server) Close() error {
     return nil
+}
+
+func (s *Server) FindOrCreateClient(m *Message) (*Client, error) {
+    for _, c := range s.Clients {
+        if bytes.Equal(c.CHAddr, m.CHAddr) {
+            return c, nil
+        }
+    }
+    
+    if m.Type == DHCPDISCOVER {
+        newc := &Client{}
+        newc.State = "NEW"
+        newc.CHAddr = m.CHAddr
+        newc.HType = m.HType
+        
+        if v, ok := m.Options[OPT_HOSTNAME]; ok {
+            newc.Hostname = string(v)
+        }
+        s.Clients = append(s.Clients, newc)
+        return newc, nil
+    }
+    
+    return nil, errors.New("New client without discovery")
 }
